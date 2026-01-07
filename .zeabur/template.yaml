@@ -11,14 +11,16 @@ services:
     build:
       type: dockerfile
       dockerfile: Dockerfile
+      target: app-sqlite
     ports:
       - port: 4000
     env:
+      - key: DATABASE_TYPE
+        value: "sqlite"
+        description: Use sqlite in the app-sqlite image.
       - key: DATABASE_URL
-        fromService:
-          name: mysql
-          type: mysql
-          property: connectionString
+        value: "file:../data/wewe-rss.db"
+        description: SQLite database file path.
       - key: AUTH_CODE
         value: ""
         description: Optional access code for the admin API.
