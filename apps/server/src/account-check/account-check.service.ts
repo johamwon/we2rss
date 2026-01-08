@@ -98,7 +98,9 @@ export class AccountCheckService {
     scanUrl: string,
   ): Promise<void> {
     // 钉钉机器人webhook URL
-    const webhookUrl = 'https://oapi.dingtalk.com/robot/send?access_token=f9612510b343e6d8bffc60b2a0d7168593b1bb93e55a75a1a1e0dd2c80555c40';
+    const webhookUrl =
+      process.env.ACCOUNT_CHECK_WEBHOOK_URL ||
+      'https://oapi.dingtalk.com/robot/send?access_token=f9612510b343e6d8bffc60b2a0d7168593b1bb93e55a75a1a1e0dd2c80555c40';
 
     try {
       // 格式化时间为北京时间
@@ -199,6 +201,8 @@ export class AccountCheckService {
           loginData.scanUrl,
         );
 
+        await this.tryRefreshAccountFromLogin(account, loginData.uuid);
+
         this.logger.log(
           `账号 ${account.id} (${account.name}) 失效处理完成，已发送通知`,
         );
@@ -213,11 +217,49 @@ export class AccountCheckService {
     }
   }
 
+  private async tryRefreshAccountFromLogin(
+    account: { id: string; name: string },
+    loginId: string,
+  ) {
+    try {
+      const loginResult = await this.trpcService.getLoginResult(loginId);
+      if (!loginResult?.vid || !loginResult?.token) {
+        if (loginResult?.message) {
+          this.logger.warn(
+            `账号 ${account.id} 登录结果未完成: ${loginResult.message}`,
+          );
+        }
+        return;
+      }
+
+      const vid = `${loginResult.vid}`;
+      if (vid !== account.id) {
+        this.logger.warn(
+          `账号 ${account.id} 扫码返回不同账号(${vid})，已忽略自动更新`,
+        );
+        return;
+      }
+
+      await this.prismaService.account.update({
+        where: { id: account.id },
+        data: {
+          token: loginResult.token,
+          name: loginResult.username || account.name,
+          status: statusMap.ENABLE,
+        },
+      });
+      this.trpcService.removeBlockedAccount(account.id);
+      this.logger.log(`账号 ${account.id} 登录信息已更新`);
+    } catch (error) {
+      this.logger.error(`账号 ${account.id} 获取登录结果失败:`, error);
+    }
+  }
+
   /**
    * 定时检测所有启用的账号
    * 每4小时执行一次
    */
-  @Cron('0 */4 * * *', {
+  @Cron(process.env.ACCOUNT_CHECK_CRON || '0 2,14 * * *', {
     name: 'checkAccounts',
     timeZone: 'Asia/Shanghai',
   })
