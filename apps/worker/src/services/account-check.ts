@@ -160,18 +160,22 @@ async function tryRefreshAccountFromLogin(
   try {
     const maxAttempts = 60;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const loginResult = await getLoginResult(env, loginId, 10000);
-      if (loginResult?.vid && loginResult?.token) {
-        const vid = `${loginResult.vid}`;
-        if (vid === account.id) {
-          await updateAccount(env.DB, account.id, {
-            token: loginResult.token,
-            name: loginResult.username || account.name,
-            status: statusMap.ENABLE,
-          });
-          removeBlockedAccount(account.id);
+      try {
+        const loginResult = await getLoginResult(env, loginId, 10000);
+        if (loginResult?.vid && loginResult?.token) {
+          const vid = `${loginResult.vid}`;
+          if (vid === account.id) {
+            await updateAccount(env.DB, account.id, {
+              token: loginResult.token,
+              name: loginResult.username || account.name,
+              status: statusMap.ENABLE,
+            });
+            removeBlockedAccount(account.id);
+          }
+          return;
         }
-        return;
+      } catch (error) {
+        // Login result often returns 4xx until the user confirms.
       }
       await sleep(5 * 1000);
     }

@@ -14,6 +14,7 @@ import {
   handleAccountCheckCron,
   testWebhookNotification,
 } from './services/account-check';
+import { getLoginResult } from './services/trpc-service';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -133,6 +134,41 @@ app.get('/test-webhook', async (c) => {
       { success: false, message: debug ? message : 'Test webhook failed' },
       500,
     );
+  }
+});
+
+app.post('/admin/account-check', async (c) => {
+  const authCode = c.env.AUTH_CODE?.trim();
+  const requestAuth =
+    c.req.header('authorization') ?? c.req.query('auth') ?? '';
+  if (authCode && requestAuth !== authCode) {
+    return c.json({ success: false, message: 'Unauthorized' }, 401);
+  }
+
+  c.executionCtx.waitUntil(handleAccountCheckCron(c.env));
+  return c.json({ success: true, queued: true });
+});
+
+app.get('/admin/login-result', async (c) => {
+  const authCode = c.env.AUTH_CODE?.trim();
+  const requestAuth =
+    c.req.header('authorization') ?? c.req.query('auth') ?? '';
+  if (authCode && requestAuth !== authCode) {
+    return c.json({ success: false, message: 'Unauthorized' }, 401);
+  }
+
+  const uuid = c.req.query('uuid')?.trim();
+  if (!uuid) {
+    return c.json({ success: false, message: 'Missing uuid' }, 400);
+  }
+
+  try {
+    const result = await getLoginResult(c.env, uuid);
+    return c.json({ success: true, result });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Login query failed';
+    return c.json({ success: false, message }, 500);
   }
 });
 
