@@ -201,7 +201,10 @@ export class AccountCheckService {
           loginData.scanUrl,
         );
 
-        await this.tryRefreshAccountFromLogin(account, loginData.uuid);
+        // 不await，让它在后台轮询检测登录状态
+        this.tryRefreshAccountFromLogin(account, loginData.uuid).catch((err) =>
+          this.logger.error(`后台轮询账号 ${account.id} 失败`, err),
+        );
 
         this.logger.log(
           `账号 ${account.id} (${account.name}) 失效处理完成，已发送通知`,
@@ -221,38 +224,52 @@ export class AccountCheckService {
     account: { id: string; name: string },
     loginId: string,
   ) {
-    try {
-      const loginResult = await this.trpcService.getLoginResult(loginId);
-      if (!loginResult?.vid || !loginResult?.token) {
+    const startTime = Date.now();
+    const timeout = 10 * 60 * 1000; // 10分钟超时
+
+    this.logger.log(`开始轮询账号 ${account.id} 的登录结果...`);
+
+    while (Date.now() - startTime < timeout) {
+      try {
+        const loginResult = await this.trpcService.getLoginResult(loginId);
+        if (loginResult?.vid && loginResult?.token) {
+          const vid = `${loginResult.vid}`;
+          if (vid !== account.id) {
+            this.logger.warn(
+              `账号 ${account.id} 扫码返回不同账号(${vid})，已忽略自动更新`,
+            );
+            return;
+          }
+
+          await this.prismaService.account.update({
+            where: { id: account.id },
+            data: {
+              token: loginResult.token,
+              name: loginResult.username || account.name,
+              status: statusMap.ENABLE,
+            },
+          });
+          this.trpcService.removeBlockedAccount(account.id);
+          this.logger.log(`账号 ${account.id} 登录信息已更新`);
+          return;
+        }
+
+        // 如果有message但没有token，可能是还在等待扫码或确认
         if (loginResult?.message) {
-          this.logger.warn(
-            `账号 ${account.id} 登录结果未完成: ${loginResult.message}`,
+          this.logger.debug(
+            `账号 ${account.id} 登录状态: ${loginResult.message}`,
           );
         }
-        return;
+      } catch (error) {
+        // 忽略网络错误等，继续重试
+        this.logger.debug(`轮询登录结果临时错误: ${error}`);
       }
 
-      const vid = `${loginResult.vid}`;
-      if (vid !== account.id) {
-        this.logger.warn(
-          `账号 ${account.id} 扫码返回不同账号(${vid})，已忽略自动更新`,
-        );
-        return;
-      }
-
-      await this.prismaService.account.update({
-        where: { id: account.id },
-        data: {
-          token: loginResult.token,
-          name: loginResult.username || account.name,
-          status: statusMap.ENABLE,
-        },
-      });
-      this.trpcService.removeBlockedAccount(account.id);
-      this.logger.log(`账号 ${account.id} 登录信息已更新`);
-    } catch (error) {
-      this.logger.error(`账号 ${account.id} 获取登录结果失败:`, error);
+      // 等待3秒再次检查
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
+
+    this.logger.warn(`账号 ${account.id} 登录轮询超时`);
   }
 
   /**
