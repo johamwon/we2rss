@@ -121,7 +121,7 @@ const Feeds = () => {
     let opmlContent = `<?xml version="1.0" encoding="UTF-8"?>
     <opml version="2.0">
       <head>
-        <title>WeWeRSS 所有订阅源</title>
+        <title>we2rss 所有订阅源</title>
       </head>
       <body>
     `;
@@ -136,7 +136,7 @@ const Feeds = () => {
     const blob = new Blob([opmlContent], { type: 'text/xml;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'WeWeRSS-All.opml';
+    link.download = 'we2rss-all.opml';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

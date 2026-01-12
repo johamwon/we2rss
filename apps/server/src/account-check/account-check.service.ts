@@ -98,9 +98,11 @@ export class AccountCheckService {
     scanUrl: string,
   ): Promise<void> {
     // 钉钉机器人webhook URL
-    const webhookUrl =
-      process.env.ACCOUNT_CHECK_WEBHOOK_URL ||
-      'https://oapi.dingtalk.com/robot/send?access_token=f9612510b343e6d8bffc60b2a0d7168593b1bb93e55a75a1a1e0dd2c80555c40';
+    const webhookUrl = process.env.ACCOUNT_CHECK_WEBHOOK_URL || '';
+    if (!webhookUrl) {
+      this.logger.warn('ACCOUNT_CHECK_WEBHOOK_URL is empty; skip webhook notify.');
+      return;
+    }
 
     try {
       // 格式化时间为北京时间

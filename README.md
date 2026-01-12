@@ -1,7 +1,7 @@
 <div align="center">
 <img src="https://raw.githubusercontent.com/cooderl/wewe-rss/main/assets/logo.png" width="80" alt="预览"/>
 
-# [WeWe RSS](https://github.com/cooderl/wewe-rss)
+# we2rss
 
 更优雅的微信公众号订阅方式。
 
@@ -32,6 +32,8 @@
   ```
 
 ## 🚀 部署
+
+开源版 Cloudflare 一键部署：`docs/open-source-deploy.md`
 
 ### 一键部署
 
@@ -175,7 +177,7 @@ pnpm run start:server
 
 ## ❤️ 赞助
 
-如果觉得 WeWe RSS 项目对你有帮助，可以给我来一杯啤酒！
+如果觉得 we2rss 项目对你有帮助，可以给我来一杯啤酒！
 
 **PayPal**: [paypal.me/cooderl](https://paypal.me/cooderl)
 

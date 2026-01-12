@@ -175,13 +175,13 @@ export class FeedsService {
       favicon: feedInfo.mpCover,
       copyright: '',
       updated: new Date(feedInfo.updateTime * 1e3),
-      generator: 'WeWe-RSS',
+      generator: 'we2rss',
       author: { name: feedInfo.mpName },
     });
 
     feed.addExtension({
       name: 'generator',
-      objects: `WeWe-RSS`,
+      objects: `we2rss`,
     });
 
     const feeds = await this.prismaService.feed.findMany({
@@ -274,8 +274,8 @@ export class FeedsService {
         this.configService.get<ConfigurationType['feed']>('feed')!;
       feedInfo = {
         id: 'all',
-        mpName: 'WeWe-RSS All',
-        mpIntro: 'WeWe-RSS 全部文章',
+        mpName: 'we2rss All',
+        mpIntro: 'we2rss 全部文章',
         mpCover: originUrl
           ? `${originUrl}/favicon.ico`
           : 'https://r2-assets.111965.xyz/wewe-rss.png',

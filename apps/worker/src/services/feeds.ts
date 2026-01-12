@@ -100,11 +100,11 @@ async function renderFeed(env: Env, opts: { type: string; feedInfo: any; article
     favicon: opts.feedInfo.mpCover,
     copyright: '',
     updated: new Date(opts.feedInfo.updateTime * 1e3),
-    generator: 'WeWe-RSS',
+    generator: 'we2rss',
     author: { name: opts.feedInfo.mpName },
   });
 
-  feed.addExtension({ name: 'generator', objects: `WeWe-RSS` });
+  feed.addExtension({ name: 'generator', objects: `we2rss` });
 
   const feeds = await listAllFeeds(env.DB);
   const enableFullText =
@@ -179,8 +179,8 @@ export async function handleGenerateFeed(env: Env, opts: {
     const originUrl = env.SERVER_ORIGIN_URL ?? '';
     feedInfo = {
       id: 'all',
-      mpName: 'WeWe-RSS All',
-      mpIntro: 'WeWe-RSS 全部文章',
+      mpName: 'we2rss All',
+      mpIntro: 'we2rss 全部文章',
       mpCover: originUrl
         ? `${originUrl}/favicon.ico`
         : 'https://r2-assets.111965.xyz/wewe-rss.png',

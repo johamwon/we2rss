@@ -9,10 +9,8 @@ import {
   Tooltip,
 } from '@nextui-org/react';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { GitHubIcon } from './GitHubIcon';
 import { useLocation } from 'react-router-dom';
 import { appVersion, serverOriginUrl } from '@web/utils/env';
-import { useEffect, useState } from 'react';
 
 const navbarItemLink = [
   {
@@ -31,18 +29,8 @@ const navbarItemLink = [
 
 const Nav = () => {
   const { pathname } = useLocation();
-  const [releaseVersion, setReleaseVersion] = useState(appVersion);
-
-  useEffect(() => {
-    fetch('https://api.github.com/repos/cooderl/wewe-rss/releases/latest')
-      .then((res) => res.json())
-      .then((data) => {
-        setReleaseVersion(data.name.replace('v', ''));
-      });
-  }, []);
-
+  const releaseVersion = appVersion;
   const isFoundNewVersion = releaseVersion > appVersion;
-  console.log('isFoundNewVersion: ', isFoundNewVersion);
 
   return (
     <div>
@@ -52,8 +40,7 @@ const Nav = () => {
             <div className="p-1">
               {isFoundNewVersion && (
                 <Link
-                  href={`https://github.com/cooderl/wewe-rss/releases/latest`}
-                  target="_blank"
+                  href="#"
                   className="mb-1 block text-medium"
                 >
                   发现新版本：v{releaseVersion}
@@ -72,7 +59,7 @@ const Nav = () => {
             >
               <Image
                 width={28}
-                alt="WeWe RSS"
+                alt="we2rss"
                 className="mr-2"
                 src={
                   serverOriginUrl
@@ -81,7 +68,7 @@ const Nav = () => {
                 }
               ></Image>
             </Badge>
-            <p className="font-bold text-inherit">WeWe RSS</p>
+            <p className="font-bold text-inherit">we2rss</p>
           </NavbarBrand>
         </Tooltip>
         <NavbarContent className="hidden sm:flex gap-4" justify="center">
@@ -100,13 +87,6 @@ const Nav = () => {
         </NavbarContent>
         <NavbarContent justify="end">
           <ThemeSwitcher></ThemeSwitcher>
-          <Link
-            href="https://github.com/cooderl/wewe-rss"
-            target="_blank"
-            color="foreground"
-          >
-            <GitHubIcon />
-          </Link>
         </NavbarContent>
       </Navbar>
     </div>

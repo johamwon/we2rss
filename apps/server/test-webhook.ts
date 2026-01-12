@@ -8,7 +8,10 @@ import * as QRCode from 'qrcode';
 
 async function testWebhook() {
   // 钉钉机器人webhook URL
-  const webhookUrl = 'https://oapi.dingtalk.com/robot/send?access_token=f9612510b343e6d8bffc60b2a0d7168593b1bb93e55a75a1a1e0dd2c80555c40';
+  const webhookUrl = process.env.ACCOUNT_CHECK_WEBHOOK_URL || '';
+  if (!webhookUrl) {
+    throw new Error('ACCOUNT_CHECK_WEBHOOK_URL is required');
+  }
 
   // 获取真实的登录二维码URL
   const platformUrl = process.env.PLATFORM_URL || 'https://weread.111965.xyz';
@@ -23,7 +26,7 @@ async function testWebhook() {
     console.log('✅ 获取登录URL成功:', testScanUrl);
   } catch (error: any) {
     console.warn('⚠️ 获取真实登录URL失败，使用测试URL:', error.message);
-    testScanUrl = 'https://weread.111965.xyz/test-login';
+    testScanUrl = 'https://example.com/login';
   }
 
   const qrCodeBase64 = await QRCode.toDataURL(testScanUrl, {

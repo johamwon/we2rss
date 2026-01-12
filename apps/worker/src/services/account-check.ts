@@ -10,10 +10,7 @@ import { createLoginUrl, getLoginResult, removeBlockedAccount } from './trpc-ser
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function getWebhookUrl(env: Env) {
-  return (
-    env.ACCOUNT_CHECK_WEBHOOK_URL ??
-    'https://oapi.dingtalk.com/robot/send?access_token=f9612510b343e6d8bffc60b2a0d7168593b1bb93e55a75a1a1e0dd2c80555c40'
-  );
+  return env.ACCOUNT_CHECK_WEBHOOK_URL ?? '';
 }
 
 async function fetchJson<T>(
@@ -21,7 +18,10 @@ async function fetchJson<T>(
   path: string,
   options: RequestInit = {},
 ) {
-  const res = await fetch(`${env.PLATFORM_URL ?? 'https://weread.111965.xyz'}${path}`, options);
+  const res = await fetch(
+    `${env.PLATFORM_URL ?? 'https://weread.111965.xyz'}${path}`,
+    options,
+  );
   const data = (await res.json().catch(() => ({}))) as T & {
     message?: string;
   };
@@ -77,6 +77,10 @@ export async function sendWebhookNotification(
   loginId: string,
 ) {
   const webhookUrl = getWebhookUrl(env);
+  if (!webhookUrl) {
+    console.warn('[account-check] ACCOUNT_CHECK_WEBHOOK_URL is empty');
+    return;
+  }
   const beijingTime = new Date().toLocaleString('zh-CN', {
     timeZone: 'Asia/Shanghai',
     year: 'numeric',

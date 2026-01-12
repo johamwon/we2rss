@@ -1,8 +1,24 @@
 # Cloudflare Deploy Guide
 
-This guide migrates WeWe RSS to Cloudflare Workers + D1 and hosts the web UI on Cloudflare Pages.
+This guide migrates we2rss to Cloudflare Workers + D1 and hosts the web UI on Cloudflare Pages.
 
-## 1) Create D1 database
+## 1) One-click deploy (recommended)
+
+```sh
+./deploy-cloudflare.ps1
+```
+
+Then update `apps/worker/wrangler.toml`:
+- `PLATFORM_URL`
+- `SERVER_ORIGIN_URL`
+
+Re-deploy:
+```sh
+cd apps/worker
+wrangler deploy
+```
+
+## 2) Create D1 database (manual)
 
 ```sh
 cd apps/worker
@@ -17,7 +33,7 @@ Apply schema:
 wrangler d1 execute wewe_rss --file=./schema.sql
 ```
 
-## 2) Configure Worker secrets/env
+## 3) Configure Worker secrets/env
 
 Required/optional variables:
 - `AUTH_CODE`: API auth code (optional, enable auth when set)
@@ -42,7 +58,7 @@ Deploy Worker:
 wrangler deploy
 ```
 
-## 3) Deploy web on Pages
+## 4) Deploy web on Pages
 
 Set build settings:
 - Build command: `pnpm --filter web build`
@@ -52,7 +68,7 @@ Set env vars:
 - `VITE_SERVER_ORIGIN_URL`: your Worker URL
 - `VITE_ENABLED_AUTH_CODE`: `true` or `false`
 
-## 4) Data migration (MySQL -> D1)
+## 5) Data migration (MySQL -> D1)
 
 Export tables (`accounts`, `feeds`, `articles`) from MySQL to CSV, then import to D1 using
 `wrangler d1 execute` with `INSERT` statements or a custom script.

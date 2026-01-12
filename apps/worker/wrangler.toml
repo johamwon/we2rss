@@ -5,7 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 PLATFORM_URL = "https://weread.111965.xyz"
-SERVER_ORIGIN_URL = "http://localhost:8787"
+SERVER_ORIGIN_URL = ""
 UPDATE_DELAY_TIME = "60"
 ENABLE_CLEAN_HTML = "false"
 FEED_CRON = "35 5,17 * * *"
