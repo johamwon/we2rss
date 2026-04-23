@@ -62,7 +62,7 @@ export async function listAccounts(
 
   const rows = await db
     .prepare(
-      `SELECT id, name, status, token, created_at, updated_at
+      `SELECT id, name, status, token, pending_login_id, created_at, updated_at
        FROM accounts${where}
        ORDER BY created_at ASC, id ASC
        LIMIT ?`,
@@ -165,7 +165,7 @@ export async function listArticles(
 export async function getAccountById(db: D1Database, id: string) {
   const row = await db
     .prepare(
-      `SELECT id, token, name, status, created_at, updated_at
+      `SELECT id, token, name, status, pending_login_id, created_at, updated_at
        FROM accounts WHERE id = ?`,
     )
     .bind(id)
@@ -197,7 +197,7 @@ export async function upsertAccount(
 export async function updateAccount(
   db: D1Database,
   id: string,
-  data: Partial<{ token: string; name: string; status: number }>,
+  data: Partial<{ token: string; name: string; status: number; pendingLoginId: string | null }>,
 ) {
   const updates: string[] = [];
   const params: unknown[] = [];
@@ -213,6 +213,10 @@ export async function updateAccount(
   if (data.status !== undefined) {
     updates.push('status = ?');
     params.push(data.status);
+  }
+  if ('pendingLoginId' in data) {
+    updates.push('pending_login_id = ?');
+    params.push(data.pendingLoginId ?? null);
   }
 
   updates.push('updated_at = ?');
@@ -492,7 +496,7 @@ export async function getAvailableAccounts(
   const blockedClause = buildNotInClause(blockedIds);
   const rows = await db
     .prepare(
-      `SELECT id, name, token, status, created_at, updated_at
+      `SELECT id, name, token, status, pending_login_id, created_at, updated_at
        FROM accounts
        WHERE status = ?${blockedClause.clause}
        ORDER BY created_at ASC
@@ -506,7 +510,7 @@ export async function getAvailableAccounts(
 export async function listEnabledAccountsWithTokens(db: D1Database) {
   const rows = await db
     .prepare(
-      `SELECT id, token, name, status, created_at, updated_at
+      `SELECT id, token, name, status, pending_login_id, created_at, updated_at
        FROM accounts WHERE status = ?`,
     )
     .bind(statusMap.ENABLE)
@@ -517,7 +521,7 @@ export async function listEnabledAccountsWithTokens(db: D1Database) {
 export async function listInvalidAccountsWithTokens(db: D1Database) {
   const rows = await db
     .prepare(
-      `SELECT id, token, name, status, created_at, updated_at
+      `SELECT id, token, name, status, pending_login_id, created_at, updated_at
        FROM accounts WHERE status = ?`,
     )
     .bind(statusMap.INVALID)

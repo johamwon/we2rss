@@ -353,14 +353,14 @@ export class TrpcService {
       .then((res) => res.data);
   }
 
-  async getLoginResult(id: string) {
+  async getLoginResult(id: string, timeoutMs?: number) {
     return this.request
       .get<{
         message: string;
         vid?: number;
         token?: string;
         username?: string;
-      }>(`/api/v2/login/platform/${id}`, { timeout: 120 * 1e3 })
+      }>(`/api/v2/login/platform/${id}`, { timeout: timeoutMs ?? 120 * 1e3 })
       .then((res) => res.data);
   }
 }

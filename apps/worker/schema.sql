@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   token TEXT NOT NULL,
   name TEXT NOT NULL,
   status INTEGER NOT NULL DEFAULT 1,
+  pending_login_id TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
