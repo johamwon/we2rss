@@ -9,4 +9,3 @@ import { TrpcModule } from '@server/trpc/trpc.module';
   exports: [AccountCheckService],
 })
 export class AccountCheckModule {}
-

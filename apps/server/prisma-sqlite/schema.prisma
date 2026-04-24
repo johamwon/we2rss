@@ -14,7 +14,9 @@ model Account {
   token     String    @map("token")
   name      String    @map("name")
   // 状态 0:失效 1:启用 2:禁用
-  status    Int       @default(1) @map("status")
+  status         Int       @default(1) @map("status")
+  // 待确认的扫码登录 uuid，用于跨 cron 周期持续检测
+  pendingLoginId String?   @map("pending_login_id")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @default(now()) @updatedAt @map("updated_at")
 

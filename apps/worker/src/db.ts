@@ -5,6 +5,7 @@ export interface AccountRow extends DbRow {
   token: string;
   name: string;
   status: number;
+  pending_login_id: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -44,6 +45,7 @@ export function toAccountDto(row: AccountRow) {
     token: row.token,
     name: row.name,
     status: row.status,
+    pendingLoginId: row.pending_login_id ?? null,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
   };
