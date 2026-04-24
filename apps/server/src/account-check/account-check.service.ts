@@ -26,7 +26,10 @@ export class AccountCheckService {
   /**
    * 检测账号是否有效
    */
-  async checkAccountValidity(accountId: string, token: string): Promise<boolean> {
+  async checkAccountValidity(
+    accountId: string,
+    token: string,
+  ): Promise<boolean> {
     try {
       const feed = await this.prismaService.feed.findFirst({
         where: { status: statusMap.ENABLE },
@@ -52,10 +55,14 @@ export class AccountCheckService {
         return false;
       }
       if (statusCode === 404) {
-        this.logger.debug(`账号 ${accountId} 检测时公众号不存在，但 token 可能有效`);
+        this.logger.debug(
+          `账号 ${accountId} 检测时公众号不存在，但 token 可能有效`,
+        );
         return true;
       }
-      this.logger.debug(`账号 ${accountId} 检测时出现其他错误: ${errMsg} (status: ${statusCode})`);
+      this.logger.debug(
+        `账号 ${accountId} 检测时出现其他错误: ${errMsg} (status: ${statusCode})`,
+      );
       return true;
     }
   }
@@ -83,7 +90,9 @@ export class AccountCheckService {
   ): Promise<void> {
     const webhookUrl = process.env.ACCOUNT_CHECK_WEBHOOK_URL || '';
     if (!webhookUrl) {
-      this.logger.warn('ACCOUNT_CHECK_WEBHOOK_URL is empty; skip webhook notify.');
+      this.logger.warn(
+        'ACCOUNT_CHECK_WEBHOOK_URL is empty; skip webhook notify.',
+      );
       return;
     }
 
@@ -125,7 +134,9 @@ export class AccountCheckService {
         timeout: 10 * 1e3,
       });
 
-      this.logger.log(`已发送钉钉 webhook 通知: 账号 ${accountId} (${accountName})`);
+      this.logger.log(
+        `已发送钉钉 webhook 通知: 账号 ${accountId} (${accountName})`,
+      );
     } catch (error: any) {
       this.logger.error(`发送 webhook 通知失败: ${error.message}`, error.stack);
       try {
@@ -139,7 +150,9 @@ export class AccountCheckService {
           headers: { 'Content-Type': 'application/json' },
           timeout: 10 * 1e3,
         });
-        this.logger.log(`已发送钉钉文本通知: 账号 ${accountId} (${accountName})`);
+        this.logger.log(
+          `已发送钉钉文本通知: 账号 ${accountId} (${accountName})`,
+        );
       } catch (textError: any) {
         this.logger.error(`发送文本通知也失败: ${textError.message}`);
       }
@@ -150,9 +163,11 @@ export class AccountCheckService {
    * 尝试用已存储的 pendingLoginId 获取扫码结果（短超时，仅检查是否已有结果）。
    * 返回 true 表示 token 已更新，false 表示未完成或已过期。
    */
-  private async tryResolvePendingLogin(
-    account: { id: string; name: string; pendingLoginId: string },
-  ): Promise<boolean> {
+  private async tryResolvePendingLogin(account: {
+    id: string;
+    name: string;
+    pendingLoginId: string;
+  }): Promise<boolean> {
     try {
       const loginResult = await this.trpcService.getLoginResult(
         account.pendingLoginId,
@@ -171,7 +186,9 @@ export class AccountCheckService {
             },
           });
           this.trpcService.removeBlockedAccount(account.id);
-          this.logger.log(`账号 ${account.id} (${account.name}) 扫码成功，token 已更新`);
+          this.logger.log(
+            `账号 ${account.id} (${account.name}) 扫码成功，token 已更新`,
+          );
           return true;
         }
         // 扫码的账号与预期不符，清除旧 loginId
@@ -204,7 +221,10 @@ export class AccountCheckService {
     const maxAttempts = 30; // 30 × (10s timeout + 5s sleep) ≈ 7.5 min
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const loginResult = await this.trpcService.getLoginResult(loginId, 10 * 1e3);
+        const loginResult = await this.trpcService.getLoginResult(
+          loginId,
+          10 * 1e3,
+        );
         if (loginResult?.vid && loginResult?.token) {
           const vid = `${loginResult.vid}`;
           if (vid !== account.id) {
@@ -231,14 +251,18 @@ export class AccountCheckService {
           return;
         }
         if (loginResult?.message) {
-          this.logger.debug(`账号 ${account.id} 登录状态: ${loginResult.message}`);
+          this.logger.debug(
+            `账号 ${account.id} 登录状态: ${loginResult.message}`,
+          );
         }
       } catch {
         // 忽略网络错误等，继续重试
       }
       await new Promise((resolve) => setTimeout(resolve, 5 * 1e3));
     }
-    this.logger.debug(`账号 ${account.id} 后台轮询超时，pendingLoginId 保留至下次 cron`);
+    this.logger.debug(
+      `账号 ${account.id} 后台轮询超时，pendingLoginId 保留至下次 cron`,
+    );
   }
 
   /**
@@ -248,9 +272,12 @@ export class AccountCheckService {
    * 3. 持久化保存新的 pendingLoginId 以便下次 cron 检查
    * 4. 在后台短时轮询（用户可能立即扫码）
    */
-  async processInvalidAccount(
-    account: { id: string; name: string; token: string; pendingLoginId: string | null },
-  ): Promise<void> {
+  async processInvalidAccount(account: {
+    id: string;
+    name: string;
+    token: string;
+    pendingLoginId: string | null;
+  }): Promise<void> {
     // 先检查已有的 pendingLoginId
     if (account.pendingLoginId) {
       const resolved = await this.tryResolvePendingLogin({
@@ -287,7 +314,9 @@ export class AccountCheckService {
         this.logger.error(`后台轮询账号 ${account.id} 失败`, err),
       );
 
-      this.logger.log(`账号 ${account.id} (${account.name}) 失效处理完成，已发送通知`);
+      this.logger.log(
+        `账号 ${account.id} (${account.name}) 失效处理完成，已发送通知`,
+      );
     } catch (error) {
       this.logger.error(`处理失效账号 ${account.id} 时出错:`, error);
     }
@@ -313,12 +342,19 @@ export class AccountCheckService {
         select: { id: true, name: true, token: true },
       });
 
-      this.logger.log(`找到 ${enabledAccounts.length} 个启用状态的账号，开始检测`);
+      this.logger.log(
+        `找到 ${enabledAccounts.length} 个启用状态的账号，开始检测`,
+      );
 
       for (const account of enabledAccounts) {
-        const isValid = await this.checkAccountValidity(account.id, account.token);
+        const isValid = await this.checkAccountValidity(
+          account.id,
+          account.token,
+        );
         if (!isValid) {
-          this.logger.warn(`账号 ${account.id} (${account.name}) 检测失效，标记为失效`);
+          this.logger.warn(
+            `账号 ${account.id} (${account.name}) 检测失效，标记为失效`,
+          );
           await this.prismaService.account.update({
             where: { id: account.id },
             data: { status: statusMap.INVALID },
@@ -350,7 +386,9 @@ export class AccountCheckService {
    * 手动触发账号检测
    */
   async manualCheck(accountId?: string) {
-    this.logger.log(`手动触发账号检测${accountId ? `: ${accountId}` : ' (所有账号)'}`);
+    this.logger.log(
+      `手动触发账号检测${accountId ? `: ${accountId}` : ' (所有账号)'}`,
+    );
 
     try {
       const where = accountId
@@ -368,7 +406,10 @@ export class AccountCheckService {
       }
 
       for (const account of accounts) {
-        const isValid = await this.checkAccountValidity(account.id, account.token);
+        const isValid = await this.checkAccountValidity(
+          account.id,
+          account.token,
+        );
         if (!isValid) {
           await this.prismaService.account.update({
             where: { id: account.id },
